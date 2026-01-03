@@ -25,6 +25,8 @@
         .coords { font-family: 'Courier New', monospace; font-weight: 600; }
         .map-link { color: #218085; text-decoration: none; font-weight: 600; }
         .map-link:hover { text-decoration: underline; }
+        .delete-link { color: #dc2626; text-decoration: none; font-weight: 600; cursor: pointer; }
+        .delete-link:hover { text-decoration: underline; }
         .loading { text-align: center; padding: 60px; color: #64748b; font-size: 18px; }
         .empty { text-align: center; padding: 60px; color: #64748b; }
         .back { padding: 20px 30px; }
@@ -70,7 +72,7 @@
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js';
-        import { getDatabase, ref, get } from 'https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js';
+        import { getDatabase, ref, get, remove } from 'https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyAueHmQZ8DbpOl2ZnS4p7zw5kLyNGJ4K8o",
@@ -84,6 +86,19 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
+
+        async function deleteRecord(recordKey) {
+            if (confirm('⚠️ Tem certeza que deseja excluir este registro?')) {
+                try {
+                    await remove(ref(db, `locations/${recordKey}`));
+                    console.log('✅ Registro excluído!');
+                    loadData();
+                } catch (error) {
+                    console.error('❌ Erro ao excluir:', error);
+                    alert('Erro ao excluir registro!');
+                }
+            }
+        }
 
         async function loadData() {
             const tableDiv = document.getElementById('dataTable');
@@ -114,6 +129,7 @@
                                 <th>Conexão</th>
                                 <th>IP</th>
                                 <th>🗺️ Mapa</th>
+                                <th>Ações</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -134,6 +150,7 @@
                                 <td>${item.connection || 'N/A'}</td>
                                 <td>${item.publicIp || 'N/A'}</td>
                                 <td><a href="${mapsUrl}" target="_blank" class="map-link">Abrir →</a></td>
+                                <td><span class="delete-link" onclick="deleteRecord('${key}')">🗑️ Excluir</span></td>
                             </tr>
                         `;
                     });
@@ -160,6 +177,8 @@
             document.getElementById('uniqueDevices').textContent = devices;
             document.getElementById('todayRegs').textContent = today;
         }
+
+        window.deleteRecord = deleteRecord;
 
         setInterval(loadData, 30000);
         loadData();
