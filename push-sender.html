@@ -8,21 +8,27 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
         body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
         .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); padding: 40px; }
-        h1 { color: #218085; margin-bottom: 10px; text-align: center; }
+        h1 { color: #218085; margin-bottom: 10px; text-align: center; font-size: 28px; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 30px; }
         .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; color: #333; font-weight: 600; }
+        label { display: block; margin-bottom: 8px; color: #333; font-weight: 600; font-size: 14px; }
         input, textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; font-size: 14px; }
         textarea { resize: vertical; min-height: 100px; }
-        button { width: 100%; padding: 14px; background: #218085; color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 16px; }
-        button:hover { background: #1d7480; }
-        .success { display: none; padding: 15px; background: #d1fae5; color: #065f46; border-radius: 8px; margin-top: 20px; }
-        .error { display: none; padding: 15px; background: #fee2e2; color: #991b1b; border-radius: 8px; margin-top: 20px; }
+        button { width: 100%; padding: 14px; background: #218085; color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 16px; transition: all 0.3s ease; }
+        button:hover { background: #1d7480; transform: translateY(-2px); }
+        .success { display: none; padding: 15px; background: #d1fae5; color: #065f46; border-radius: 8px; margin-top: 20px; font-weight: 600; }
+        .error { display: none; padding: 15px; background: #fee2e2; color: #991b1b; border-radius: 8px; margin-top: 20px; font-weight: 600; }
+        .success.active { display: block; }
+        .error.active { display: block; }
+        .back { margin-top: 20px; text-align: center; }
+        a { color: #218085; text-decoration: none; font-weight: 600; }
+        a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>📢 Enviar Notificação Push</h1>
-        <p style="text-align: center; color: #666; margin-bottom: 30px;">Para usuários com Milucão aberto</p>
+        <p class="subtitle">Para usuários com Milucão aberto</p>
 
         <div class="form-group">
             <label for="title">Título</label>
@@ -31,13 +37,17 @@
 
         <div class="form-group">
             <label for="body">Mensagem</label>
-            <textarea id="body" placeholder="Ex: O Milucão está no Parque da Vila Roma"></textarea>
+            <textarea id="body" placeholder="Ex: O Milucão está no Parque da Vila Roma">O Milucão foi localizado!</textarea>
         </div>
 
         <button onclick="sendPush()">🚀 Enviar Notificação</button>
 
-        <div class="success" id="success">✅ Notificação enviada com sucesso!</div>
-        <div class="error" id="error">❌ Erro ao enviar. Verifique a Server Key.</div>
+        <div class="success" id="success">✅ Notificação enviada com sucesso! Todos com a página aberta receberão!</div>
+        <div class="error" id="error">❌ Erro ao enviar. Tente novamente.</div>
+
+        <div class="back">
+            <a href="/">← Voltar para cadastro</a>
+        </div>
     </div>
 
     <script>
@@ -46,18 +56,11 @@
             const body = document.getElementById('body').value;
 
             if (!title || !body) {
-                alert('Preencha título e mensagem!');
+                alert('⚠️ Preencha título e mensagem!');
                 return;
             }
 
-            // Sua Server Key do Firebase Cloud Messaging
-            const serverKey = BG3Y1RLbPHe8LDlGJBuSA_Mtect3352YM4f1klLvQBE8WnF-DOgMZHBHICqzFpit5JeY35qhQ1r2bRryJdCX37E;
-
-            if (serverKey === BG3Y1RLbPHe8LDlGJBuSA_Mtect3352YM4f1klLvQBE8WnF-DOgMZHBHICqzFpit5JeY35qhQ1r2bRryJdCX37E) {
-                document.getElementById('error').style.display = 'block';
-                alert('⚠️ Configure a Server Key primeiro!\n\n1. Vá em Firebase Console\n2. Projeto Settings → Cloud Messaging\n3. Copie a Server Key\n4. Cole no código');
-                return;
-            }
+            const serverKey = 'BG3Y1RLbPHe8LDlGJBuSA_Mtect3352YM4f1klLvQBE8WnF-DOgMZHBHICqzFpit5JeY35qhQ1r2bRryJdCX37E';
 
             try {
                 const response = await fetch('https://fcm.googleapis.com/fcm/send', {
@@ -80,23 +83,23 @@
                 });
 
                 if (response.ok) {
-                    document.getElementById('success').style.display = 'block';
-                    document.getElementById('error').style.display = 'none';
+                    document.getElementById('success').classList.add('active');
+                    document.getElementById('error').classList.remove('active');
                     setTimeout(() => {
                         document.getElementById('title').value = '';
                         document.getElementById('body').value = '';
-                        document.getElementById('success').style.display = 'none';
+                        document.getElementById('success').classList.remove('active');
                     }, 3000);
                 } else {
-                    document.getElementById('error').style.display = 'block';
-                    document.getElementById('success').style.display = 'none';
+                    document.getElementById('error').classList.add('active');
+                    document.getElementById('success').classList.remove('active');
                 }
             } catch (err) {
                 console.error(err);
-                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').classList.add('active');
+                document.getElementById('success').classList.remove('active');
             }
         }
     </script>
 </body>
 </html>
-
