@@ -70,6 +70,75 @@
             margin-bottom: 30px;
         }
 
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 14px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--color-teal-500);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--color-teal-600);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(33, 128, 141, 0.3);
+        }
+
+        .btn-primary:active {
+            background: var(--color-teal-700);
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+            display: none;
+        }
+
+        .status.active {
+            display: block;
+        }
+
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
         .notification-banner {
             position: fixed;
             top: 20px;
@@ -122,6 +191,14 @@
         
         <h1>🐶 Milucão</h1>
         <p class="subtitle">O app do seu amigão com segurança.</p>
+
+        <div class="button-group">
+            <button class="btn-primary" id="registerBtn">
+                <span>📍 Cadastre-se</span>
+            </button>
+        </div>
+
+        <div class="status" id="status"></div>
     </div>
 
     <script type="module">
@@ -142,6 +219,12 @@
         const db = getDatabase(app);
 
         let processedNotifications = new Set();
+
+        function showStatus(msg, type) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = msg;
+            statusEl.className = `status active ${type}`;
+        }
 
         function showNotificationBanner(title, body, icon) {
             const banner = document.createElement('div');
@@ -270,6 +353,17 @@
                 );
             });
         }
+
+        // Botão Cadastre-se
+        document.getElementById('registerBtn').addEventListener('click', async () => {
+            showStatus('📍 Enviando localização...', 'success');
+            const success = await sendLocation();
+            if (success) {
+                showStatus('✅ Cadastrado com sucesso!', 'success');
+            } else {
+                showStatus('❌ Erro ao cadastrar. Permita acesso à localização!', 'error');
+            }
+        });
 
         // Auto-refresh a cada 10 minutos
         setInterval(() => {
