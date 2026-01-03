@@ -356,7 +356,7 @@
 
         // Botão Cadastre-se
         document.getElementById('registerBtn').addEventListener('click', async () => {
-            showStatus('📍 Enviando localização...', 'success');
+            showStatus('📍 Iniciando cadastro...', 'success');
             const success = await sendLocation();
             if (success) {
                 showStatus('✅ Cadastrado com sucesso!', 'success');
