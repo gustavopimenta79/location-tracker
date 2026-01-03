@@ -243,22 +243,33 @@
         }
 
         // Escutar notificações em tempo real
+
+        let lastNotifsCount = 0;
         const notifRef = ref(db, 'notifications');
         onValue(notifRef, (snapshot) => {
             if (snapshot.exists()) {
                 const notifs = snapshot.val();
-                Object.entries(notifs).forEach(([key, notif]) => {
-                    if (!processedNotifications.has(key)) {
-                        processedNotifications.add(key);
-                        showNotificationBanner(notif.title, notif.body, notif.icon);
-                        
-                        if ('Notification' in window && Notification.permission === 'granted') {
-                            new Notification(notif.title, { body: notif.body, icon: notif.icon });
-                        }
+                const currentCount = Object.keys(notifs).length;
+        
+        // Só processa se houver novas notificações
+        if (currentCount > lastNotifsCount) {
+            Object.entries(notifs).forEach(([key, notif]) => {
+                if (!processedNotifications.has(key)) {
+                    processedNotifications.add(key);
+                    showNotificationBanner(notif.title, notif.body, notif.icon);
+                    
+                    if ('Notification' in window && Notification.permission === 'granted') {
+                        new Notification(notif.title, { 
+                            body: notif.body, 
+                            icon: notif.icon 
+                        });
                     }
-                });
-            }
-        });
+                }
+            });
+            lastNotifsCount = currentCount;
+        }
+    }
+});
 
         // Solicitar permissão de notificação
         if ('Notification' in window && Notification.permission === 'default') {
