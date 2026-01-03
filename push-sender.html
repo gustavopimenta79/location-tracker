@@ -17,12 +17,14 @@
         button { width: 100%; padding: 14px; background: #218085; color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 16px; transition: all 0.3s ease; }
         button:hover { background: #1d7480; transform: translateY(-2px); }
         .success { display: none; padding: 15px; background: #d1fae5; color: #065f46; border-radius: 8px; margin-top: 20px; font-weight: 600; }
-        .error { display: none; padding: 15px; background: #fee2e2; color: #991b1b; border-radius: 8px; margin-top: 20px; font-weight: 600; }
+        .error { display: none; padding: 15px; background: #fee2e2; color: #991b1b; border-radius: 8px; margin-top: 20px; font-weight: 600; word-break: break-word; }
         .success.active { display: block; }
         .error.active { display: block; }
         .back { margin-top: 20px; text-align: center; }
         a { color: #218085; text-decoration: none; font-weight: 600; }
         a:hover { text-decoration: underline; }
+        .debug { display: none; padding: 15px; background: #f0f0f0; border-radius: 8px; margin-top: 20px; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto; }
+        .debug.active { display: block; }
     </style>
 </head>
 <body>
@@ -43,7 +45,8 @@
         <button onclick="sendPush()">🚀 Enviar Notificação</button>
 
         <div class="success" id="success">✅ Notificação enviada com sucesso! Todos com a página aberta receberão!</div>
-        <div class="error" id="error">❌ Erro ao enviar. Tente novamente.</div>
+        <div class="error" id="error"></div>
+        <div class="debug" id="debug"></div>
 
         <div class="back">
             <a href="/">← Voltar para cadastro</a>
@@ -54,6 +57,7 @@
         async function sendPush() {
             const title = document.getElementById('title').value;
             const body = document.getElementById('body').value;
+            const debugEl = document.getElementById('debug');
 
             if (!title || !body) {
                 alert('⚠️ Preencha título e mensagem!');
@@ -62,25 +66,36 @@
 
             const serverKey = 'BG3Y1RLbPHe8LDlGJBuSA_Mtect3352YM4f1klLvQBE8WnF-DOgMZHBHICqzFpit5JeY35qhQ1r2bRryJdCX37E';
 
+            debugEl.classList.add('active');
+            debugEl.innerHTML = '🔄 Enviando...\n';
+
             try {
+                const payload = {
+                    to: '/topics/all_users',
+                    notification: {
+                        title: title,
+                        body: body,
+                        icon: 'https://location-tracker-pi-jade.vercel.app/milucao.jpeg'
+                    },
+                    data: {
+                        timestamp: new Date().toLocaleString('pt-BR')
+                    }
+                };
+
+                debugEl.innerHTML += '📤 Payload enviado:\n' + JSON.stringify(payload, null, 2) + '\n\n';
+
                 const response = await fetch('https://fcm.googleapis.com/fcm/send', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `key=${serverKey}`
                     },
-                    body: JSON.stringify({
-                        to: '/topics/all_users',
-                        notification: {
-                            title: title,
-                            body: body,
-                            icon: 'https://location-tracker-pi-jade.vercel.app/milucao.jpeg'
-                        },
-                        data: {
-                            timestamp: new Date().toLocaleString('pt-BR')
-                        }
-                    })
+                    body: JSON.stringify(payload)
                 });
+
+                debugEl.innerHTML += `📊 Status da resposta: ${response.status}\n`;
+                const responseText = await response.text();
+                debugEl.innerHTML += `📋 Resposta: ${responseText}\n`;
 
                 if (response.ok) {
                     document.getElementById('success').classList.add('active');
@@ -89,13 +104,17 @@
                         document.getElementById('title').value = '';
                         document.getElementById('body').value = '';
                         document.getElementById('success').classList.remove('active');
+                        debugEl.classList.remove('active');
                     }, 3000);
                 } else {
+                    document.getElementById('error').innerHTML = `❌ Erro ${response.status}: ${responseText}`;
                     document.getElementById('error').classList.add('active');
                     document.getElementById('success').classList.remove('active');
                 }
             } catch (err) {
-                console.error(err);
+                console.error('Erro:', err);
+                debugEl.innerHTML += `❌ Erro: ${err.message}\n`;
+                document.getElementById('error').innerHTML = `❌ Erro: ${err.message}`;
                 document.getElementById('error').classList.add('active');
                 document.getElementById('success').classList.remove('active');
             }
