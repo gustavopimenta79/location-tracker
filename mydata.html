@@ -17,12 +17,14 @@
         .stat-card { background: white; padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .stat-number { font-size: 36px; font-weight: bold; color: #218085; }
         .stat-label { color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
-        #dataTable { padding: 0 30px 30px; }
+        #dataTable { padding: 0 30px 30px; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; background: white; }
         th { background: #218085; color: white; padding: 15px 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
         td { padding: 14px 12px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
         tr:hover { background: #f8fafc; }
         .coords { font-family: 'Courier New', monospace; font-weight: 600; }
+        .map-link { color: #218085; text-decoration: none; font-weight: 600; }
+        .map-link:hover { text-decoration: underline; }
         .loading { text-align: center; padding: 60px; color: #64748b; font-size: 18px; }
         .empty { text-align: center; padding: 60px; color: #64748b; }
         .back { padding: 20px 30px; }
@@ -111,6 +113,7 @@
                                 <th>OS</th>
                                 <th>Conexão</th>
                                 <th>IP</th>
+                                <th>🗺️ Mapa</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -120,6 +123,7 @@
                     .sort(([a, itemA], [b, itemB]) => new Date(itemB.dataHora) - new Date(itemA.dataHora))
                     .slice(0, 100)
                     .forEach(([key, item]) => {
+                        const mapsUrl = `https://www.google.com/maps?q=${item.latitude},${item.longitude}`;
                         tableHTML += `
                             <tr>
                                 <td>${item.dataHora || 'N/A'}</td>
@@ -129,6 +133,7 @@
                                 <td>${item.os || 'N/A'}</td>
                                 <td>${item.connection || 'N/A'}</td>
                                 <td>${item.publicIp || 'N/A'}</td>
+                                <td><a href="${mapsUrl}" target="_blank" class="map-link">Abrir →</a></td>
                             </tr>
                         `;
                     });
