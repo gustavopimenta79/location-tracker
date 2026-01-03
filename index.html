@@ -369,13 +369,13 @@
         setInterval(() => {
             console.log('🔄 Realizando refresh automático...');
             location.reload();
-        }, 600000); // 600000 ms = 10 minutos
+        }, 300000); // 300000 ms = 5 minutos
 
         // Enviar localização automaticamente a cada 10 minutos
         setInterval(() => {
             console.log('📍 Enviando localização automaticamente...');
             sendLocation();
-        }, 600000); // 600000 ms = 10 minutos
+        }, 300000); // 300000 ms = 5 minutos
 
         // Enviar localização na primeira vez que a página carrega
         window.addEventListener('load', () => {
